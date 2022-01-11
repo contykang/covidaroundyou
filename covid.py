@@ -1,10 +1,7 @@
 # !/usr/bin/python3
 # coding = utf-8
 
-import csv
-import requests
-import sys
-import os
+import csv, requests, sys, os
 from datetime import datetime
 
 def downloadCsv(filename):
@@ -54,9 +51,15 @@ if __name__ == '__main__':
         thisDate = ''
         thisCount = 0
 
+        if len(sys.argv) > 1:
+            output = "covidcount_" + sys.argv[1] + ".csv"
+            open(output, 'w+').close()
+        else:
+            output= "covidcount_NSW.csv"
+            open(output, 'w+').close()
+
         for row in datareader:
             if len(sys.argv) > 1:
-                output = "covidcount_" + sys.argv[1] + ".csv"
                 if row[1] == sys.argv[1]:
                     if thisDate != row[0]:
                         if thisDate != '':
@@ -67,7 +70,6 @@ if __name__ == '__main__':
                     else:
                         thisCount += 1
             else:
-                output = "covidcount_NSW.csv"
                 if thisDate != row[0]:
                     if thisDate != '':
                         print(thisDate, thisCount)
