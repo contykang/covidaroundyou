@@ -51,6 +51,7 @@ if __name__ == '__main__':
         thisDate = ''
         thisCount = 0
 
+        # Create a new output file every time before writting the new data into the file.
         if len(sys.argv) > 1:
             output = "covidcount_" + sys.argv[1] + ".csv"
             open(output, 'w+').close()
@@ -58,6 +59,7 @@ if __name__ == '__main__':
             output= "covidcount_NSW.csv"
             open(output, 'w+').close()
 
+        #Start parsing the data
         for row in datareader:
             if len(sys.argv) > 1:
                 if row[1] == sys.argv[1]:
