@@ -7,25 +7,23 @@ import csv
 import requests
 import sys
 import os
+import re
 from datetime import datetime
 
 
 def download_csv(file_name):
-    url = 'https://data.nsw.gov.au/data/dataset/aefcde60-3b0c-4bc0-9af1-6fe652944ec2/resource/21304414-1ff1-4243-a5d2' \
-          '-f52778048b29/download/confirmed_cases_table1_location.csv '
+    """
+    This function will download the raw data file form NSW Health website.
+
+    :param file_name: The output file name to save the raw data
+    :return: None
+    """
+    url = 'https://data.nsw.gov.au/data/dataset/aefcde60-3b0c-4bc0-9af1-6fe652944ec2/resource/' \
+              '5d63b527-e2b8-4c42-ad6f-677f14433520/download/confirmed_cases_table1_location_agg.csv'
     my_file = requests.get(url)
 
     with open(file_name, 'wb') as output_file:
         output_file.write(my_file.content)
-
-
-def output_csv(file_name, date, count):
-    # Export the data to a single CSV file for further process
-
-    with open(file_name, 'a') as out_csv:
-        add_row = [date, count]
-        write = csv.writer(out_csv)
-        write.writerow(add_row)
 
 
 def main(postcode):
@@ -52,42 +50,45 @@ def main(postcode):
 
     # Start importing data from csv file and calculate the total case number at each day.
     with open('raw_covid.csv', newline='') as csvfile:
-        datareader = csv.reader(csvfile)
-
-        thisDate = ''
-        thisCount = 0
-
-        # Create a new output file every time before writing the new data into the file.
-        if len(sys.argv) > 1:
-            output = "covidcount_" + sys.argv[1] + ".csv"
-            open(output, 'w+').close()
-        else:
-            output = "covidcount_NSW.csv"
-            open(output, 'w+').close()
-
-        # Start parsing the data
-        for row in datareader:
-            if len(sys.argv) > 1:
-                if row[1] == sys.argv[1]:
-                    if this_date != row[0]:
-                        if this_date != '':
-                            print(this_date, this_count)
-                            output_csv(output, this_date, this_count)
-                        this_date = row[0]
-                        this_count = 1
-                    else:
-                        thisCount += 1
+        data_reader = csv.reader(csvfile)
+        result = dict()
+        for row in data_reader:
+            if row[0] == 'notification_date':
+                continue
+            if postcode == 0:
+                # Need to process all data for the whole state
+                if row[0] not in result:
+                    result[row[0]] = 0
+                result[row[0]] += int(row[7])
             else:
-                if thisDate != row[0]:
-                    if thisDate != '':
-                        print(thisDate, thisCount)
-                        output_csv(output, this_date, this_count)
-                    this_date = row[0]
-                    this_count = 1
-                else:
-                    this_count += 1
+                if postcode in row[1]:
+                    if row[0] not in result:
+                        result[row[0]] = 0
+                    result[row[0]] += int(row[7])
+    return result
 
 
 if __name__ == '__main__':
-    postcode = sys.argv[1]
-    main(postcode)
+    postcode_pattern = re.compile(r'^2\d{3}$')
+
+    if len(sys.argv) == 1:
+        # No postcode, export all result for whole NSW
+        output = 'covidcount_NSW.csv'
+        res = main(0)
+    elif len(sys.argv) == 2 and re.findall(postcode_pattern, sys.argv[1]):
+        # Postcode provided
+        print(f'Now processing the data for {re.findall(postcode_pattern, sys.argv[1])[0]}.')
+        output = 'covidcount_' + sys.argv[1] + '.csv'
+        res = main(sys.argv[1])
+    else:
+        print("Too many arguments! The argument should be a valid postcode (4 digis beginning with 2)")
+        sys.exit(0)
+
+    with open(output, 'w') as file:
+        pass
+
+    for date in res:
+        add_row = [date, res[date]]
+        with open(output, 'a+') as out:
+            write = csv.writer(out)
+            write.writerow(add_row)
