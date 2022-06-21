@@ -27,6 +27,13 @@ def download_csv(file_name):
 
 
 def main(postcode):
+    """
+    This function will read the records from the local copy of aggregated result, then record the case numbers per day.
+
+    :param postcode: int, the postcode you want to check with, if "0", return the result for the whole state.
+    :return: dict, a dictionary contains the date and the total case number at that date.
+    """
+
     filename = 'raw_covid.csv'
     # Check if the raw_covid.csv file exist (mainly for the first time running the script). Create one empty file if not
     # exist then download the latest data.
@@ -85,6 +92,7 @@ if __name__ == '__main__':
         sys.exit(0)
 
     with open(output, 'w') as file:
+        # Create empty file for the output
         pass
 
     for date in res:
